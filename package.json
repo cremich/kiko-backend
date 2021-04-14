@@ -1,0 +1,61 @@
+{
+  "name": "kiko-backend",
+  "version": "0.1.0",
+  "bin": {
+    "kiko": "bin/kiko.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "postinstall": "npx simple-git-hooks",
+    "lint": "npx eslint . --ext .ts,.tsx"
+  },
+  "devDependencies": {
+    "@aws-cdk/assert": "^1.98.0",
+    "@commitlint/cli": "^12.1.1",
+    "@commitlint/config-conventional": "^12.1.1",
+    "@types/aws-lambda": "^8.10.75",
+    "@types/jest": "^26.0.22",
+    "@types/node": "^14.14.38",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
+    "aws-sdk": "2.804.0",
+    "aws-xray-sdk": "^3.3.1",
+    "eslint": "^7.24.0",
+    "eslint-config-prettier": "^8.2.0",
+    "jest": "^26.6.3",
+    "lint-staged": "^10.5.4",
+    "prettier": "^2.2.1",
+    "simple-git-hooks": "^2.3.1",
+    "ts-jest": "^26.5.4",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-amplify": "^1.98.0",
+    "@aws-cdk/aws-appsync": "^1.98.0",
+    "@aws-cdk/aws-cognito": "^1.98.0",
+    "@aws-cdk/aws-dynamodb": "^1.98.0",
+    "@aws-cdk/aws-iam": "^1.98.0",
+    "@aws-cdk/aws-lambda": "^1.98.0",
+    "@aws-cdk/aws-lambda-event-sources": "^1.98.0",
+    "@aws-cdk/aws-lambda-nodejs": "^1.98.0",
+    "@aws-cdk/aws-logs": "^1.98.0",
+    "@aws-cdk/aws-pinpoint": "^1.98.0",
+    "@aws-cdk/aws-sns": "^1.98.0",
+    "@aws-cdk/aws-stepfunctions": "^1.98.0",
+    "@aws-cdk/aws-stepfunctions-tasks": "^1.98.0",
+    "@aws-cdk/core": "^1.98.0",
+    "@aws-cdk/custom-resources": "^1.98.0",
+    "source-map-support": "^0.5.19"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged",
+    "commit-msg": "npx --no-install commitlint --edit $1"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": "eslint --cache --fix",
+    "*.{ts,tsx,js,css,md}": "prettier --write"
+  }
+}

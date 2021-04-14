@@ -1,0 +1,30 @@
+type Pool {
+  tenant: String!
+  poolName: String!
+  segmentId: String
+  pinpointApplicationId: String
+}
+
+type Query {
+  listPools: [Pool]
+}
+
+type Result {
+  id: ID!
+  status: ResultStatus!
+}
+
+enum ResultStatus {
+  PENDING
+  COMPLETE
+  ERROR
+}
+
+input ProcessTestResultInput {
+  groupName: String!
+  testResult: String!
+}
+
+type Mutation {
+  processTestResult(input: ProcessTestResultInput!): Result
+}
