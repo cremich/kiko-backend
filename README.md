@@ -1,7 +1,9 @@
 # KIKO Backend
 
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](code_of_conduct.md)
-[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg?style=for-the-badge)](code_of_conduct.md)
+[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=for-the-badge)](https://github.com/prettier/prettier)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/cremich?style=for-the-badge)](https://github.com/sponsors/cremich)
+[![Paypal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/pools/c/8yGs7i3cOe)
 
 Welcome to the KIKO Backend 👋 This repository provides all backend and infrastructure components for the KIKO-App.
 
@@ -177,3 +179,10 @@ Feel free to check [issues page](https://github.com/cremich/kiko-backend/issues)
 requests or if you have general questions.
 
 Be also sure to review our [contributing guidelines](./CONTRIBUTING.md) and [code of conduct](./CODE_OF_CONDUCT.md).
+
+## 🙏 Donation
+
+We are very thankful if you decide to send us a donation. To ensure that we can cover the costs to provide the infrastructure for the KIKO app. To ensure that every Kindergarten in germany has access to the solution to implement the SARS-CoV-2 pool testings in their institutions. So that our kids and their families stay healthy! Please click on one of the
+
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sponsors/cremich)
+[![Paypal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/pools/c/8yGs7i3cOe)
