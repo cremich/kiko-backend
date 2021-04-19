@@ -35,6 +35,7 @@
   "dependencies": {
     "@aws-cdk/aws-amplify": "^1.98.0",
     "@aws-cdk/aws-appsync": "^1.98.0",
+    "@aws-cdk/aws-codecommit": "^1.99.0",
     "@aws-cdk/aws-cognito": "^1.98.0",
     "@aws-cdk/aws-dynamodb": "^1.98.0",
     "@aws-cdk/aws-iam": "^1.98.0",
