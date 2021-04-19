@@ -4,6 +4,8 @@ updates:
   - package-ecosystem: "npm"
     # Look for `package.json` and `lock` files in the `root` directory
     directory: "/"
+    # Open ten udpate PRs at max
+    open-pull-requests-limit: 10
     # Check the npm registry for updates weekly
     schedule:
       interval: "weekly"
