@@ -21,7 +21,7 @@
     "@types/node": "^14.14.38",
     "@typescript-eslint/eslint-plugin": "^4.22.0",
     "@typescript-eslint/parser": "^4.22.0",
-    "aws-sdk": "2.804.0",
+    "aws-sdk": "2.888.0",
     "aws-xray-sdk": "^3.3.1",
     "eslint": "^7.24.0",
     "eslint-config-prettier": "^8.2.0",
