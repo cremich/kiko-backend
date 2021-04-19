@@ -49,7 +49,7 @@ export class ApiStack extends cdk.Stack {
       fieldName: "processTestResult",
       requestMappingTemplate: appsync.MappingTemplate.fromString(
         `
-          $util.qr($ctx.stash.put("groupName", $context.arguments.input.groupName))
+          $util.qr($ctx.stash.put("poolName", $context.arguments.input.poolName))
           $util.qr($ctx.stash.put("testResult", $context.arguments.input.testResult))
           $util.qr($ctx.stash.put("tenant", $context.identity.claims.get("cognito:groups").get(0)))
           {
