@@ -21,7 +21,7 @@ enum ResultStatus {
 }
 
 input ProcessTestResultInput {
-  groupName: String!
+  poolName: String!
   testResult: String!
 }
 
