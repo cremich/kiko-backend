@@ -17,7 +17,6 @@ const poolManagement = new PoolManagementStack(app, `${deployStage}-kiko-pool-ma
 });
 
 const tenantManagement = new TenantManagementStack(app, `${deployStage}-kiko-tenant-management`, {
-  userPoolDomainPrefix: `kiko-${deployStage}`,
   poolTable: poolManagement.poolTable,
   deployStage,
 });
