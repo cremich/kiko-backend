@@ -11,7 +11,6 @@ interface TenantContext {
 }
 
 interface TenantManagementStackProps extends cdk.StackProps {
-  readonly userPoolDomainPrefix: string;
   readonly poolTable: dynamodb.Table;
   readonly deployStage: string;
 }
@@ -63,12 +62,6 @@ export class TenantManagementStack extends cdk.Stack {
       oAuth: {
         callbackUrls: ["http://localhost:8080"],
         logoutUrls: ["http://localhost:8080"],
-      },
-    });
-
-    this.userPool.addDomain("user-pool-domain", {
-      cognitoDomain: {
-        domainPrefix: props.userPoolDomainPrefix,
       },
     });
 
