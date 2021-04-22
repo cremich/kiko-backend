@@ -50,7 +50,8 @@ In order to install the backend on your local machine, please ensure to have the
 
 - AWS CLI v2
 - Docker
-- Node.js runtime (built with Latest LTS Fermium >= v14.16.0)
+- node.js v14 (LTS)
+- npm v6 (bundled with node.js)
 
 ### Installation
 
