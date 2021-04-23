@@ -53,6 +53,7 @@
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged",
+    "pre-push": "npm test",
     "commit-msg": "npx --no-install commitlint --edit $1"
   },
   "lint-staged": {
