@@ -3,6 +3,7 @@ import * as cognito from "@aws-cdk/aws-cognito";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
 
 import { Tenant } from "./constructs/tenant";
+import { ITopic } from "@aws-cdk/aws-sns";
 
 interface TenantContext {
   readonly tenantName: string;
@@ -13,6 +14,7 @@ interface TenantContext {
 interface TenantManagementStackProps extends cdk.StackProps {
   readonly poolTable: dynamodb.Table;
   readonly deployStage: string;
+  readonly alarmTopic: ITopic;
 }
 
 export class TenantManagementStack extends cdk.Stack {
@@ -72,6 +74,7 @@ export class TenantManagementStack extends cdk.Stack {
         userPool: this.userPool,
         poolTable: props.poolTable,
         testPools: tenant.testPools,
+        alarmTopic: props.alarmTopic,
       });
 
       new cdk.CfnOutput(this, `${tenant.tenantName}-pinpoint-application-id`, {
