@@ -92,6 +92,13 @@ As the lambda functions are constructed using the [@aws-cdk/aws-lambda-nodejs mo
 
 ### Deploy the application
 
+If you'd like to receive email notifications for cloudwatch alarms (which is recommendable) provide your admin address
+at deploy time. Multiple comma-separated addresses are also supported.
+
+```shell
+export ALARM_SUBSCRIPTION_EMAIL_ADDRESSES=admin@example.com
+```
+
 To deploy the stack using AWS CloudFormation, simply run
 
 ```shell
