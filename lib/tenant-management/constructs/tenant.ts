@@ -1,10 +1,12 @@
 import * as cdk from "@aws-cdk/core";
-import * as sfn from "@aws-cdk/aws-stepfunctions";
 import * as pinpoint from "@aws-cdk/aws-pinpoint";
 import * as cognito from "@aws-cdk/aws-cognito";
 import * as cr from "@aws-cdk/custom-resources";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
 import * as iam from "@aws-cdk/aws-iam";
+import * as cloudwatch from "@aws-cdk/aws-cloudwatch";
+import { ComparisonOperator } from "@aws-cdk/aws-cloudwatch";
+import { Duration } from "@aws-cdk/core";
 
 export interface TenantProps {
   tenantName: string;
@@ -36,9 +38,28 @@ export class Tenant extends cdk.Construct {
       name: props.tenantName,
     });
 
-    new pinpoint.CfnSMSChannel(this, "pinpoint-sms-channel", {
+    const smsChannel = new pinpoint.CfnSMSChannel(this, "pinpoint-sms-channel", {
       applicationId: this.pinpointApplication.ref,
       enabled: true,
+    });
+
+    const smsSendFailureMetric = new cloudwatch.Metric({
+      namespace: "AWS/Pinpoint",
+      metricName: "CampaignSendMessagePermanentFailure",
+      period: Duration.minutes(1),
+      statistic: "sum",
+      dimensions: {
+        Channel: "SMS",
+        ApplicationId: smsChannel.applicationId,
+      },
+    });
+
+    const smsSendFailureAlert = new cloudwatch.Alarm(this, "campaignSendMessagePermanentFailureAlert", {
+      metric: smsSendFailureMetric,
+      comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      threshold: 1,
+      evaluationPeriods: 1,
+      datapointsToAlarm: 1,
     });
 
     this.userPoolGroup = new cognito.CfnUserPoolGroup(this, "user-pool-group", {
