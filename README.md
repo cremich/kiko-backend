@@ -158,6 +158,9 @@ aws pinpoint update-endpoint \
  --endpoint-request '{"ChannelType": "SMS", "Address": "+4912345678","Attributes": {"Group": ["Alpha","Beta","Gamma"]} }'
 ```
 
+Note that your account might need a service limit increase before you'll be able to have SMS sent out.
+This can be done [via the AWS Support](https://console.aws.amazon.com/support/cases#/create?issueType=service-limit-increase&limitType=service-code-sns-text-messaging).
+
 ### Process test results
 
 One option to trigger the test result processing is to start an AWS Step Function execution with the following command.
