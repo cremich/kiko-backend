@@ -92,6 +92,13 @@ As the lambda functions are constructed using the [@aws-cdk/aws-lambda-nodejs mo
 
 ### Deploy the application
 
+If you'd like to receive email notifications for cloudwatch alarms (which is recommendable) provide your admin address
+at deploy time. Multiple comma-separated addresses are also supported.
+
+```shell
+export ALARM_SUBSCRIPTION_EMAIL_ADDRESSES=admin@example.com
+```
+
 To deploy the stack using AWS CloudFormation, simply run
 
 ```shell
@@ -150,6 +157,9 @@ aws pinpoint update-endpoint \
  --endpoint-id test-endpoint \
  --endpoint-request '{"ChannelType": "SMS", "Address": "+4912345678","Attributes": {"Group": ["Alpha","Beta","Gamma"]} }'
 ```
+
+Note that your account might need a service limit increase before you'll be able to have SMS sent out.
+This can be done [via the AWS Support](https://console.aws.amazon.com/support/cases#/create?issueType=service-limit-increase&limitType=service-code-sns-text-messaging).
 
 ### Process test results
 
