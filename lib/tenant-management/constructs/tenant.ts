@@ -4,18 +4,14 @@ import * as cognito from "@aws-cdk/aws-cognito";
 import * as cr from "@aws-cdk/custom-resources";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
 import * as iam from "@aws-cdk/aws-iam";
-import * as cloudwatch from "@aws-cdk/aws-cloudwatch";
-import * as cwActions from "@aws-cdk/aws-cloudwatch-actions";
-import { Duration } from "@aws-cdk/core";
-import { ITopic } from "@aws-cdk/aws-sns";
 
 export interface TenantProps {
   tenantName: string;
   tenantDescription: string;
+  pinpointApplication: pinpoint.CfnApp;
   userPool: cognito.UserPool;
   poolTable: dynamodb.Table;
   testPools: string[];
-  alarmTopic: ITopic;
 }
 
 interface PoolItemPutRequest {
@@ -23,48 +19,16 @@ interface PoolItemPutRequest {
     Item: {
       tenant: { S: string };
       poolName: { S: string };
-      pinpointApplicationId: { S: string };
       segmentId: { S: string };
     };
   };
 }
 
 export class Tenant extends cdk.Construct {
-  public pinpointApplication: pinpoint.CfnApp;
   public userPoolGroup: cognito.CfnUserPoolGroup;
 
   constructor(scope: cdk.Construct, id: string, props: TenantProps) {
     super(scope, id);
-
-    this.pinpointApplication = new pinpoint.CfnApp(this, "pinpoint-application", {
-      name: props.tenantName,
-    });
-
-    const smsChannel = new pinpoint.CfnSMSChannel(this, "pinpoint-sms-channel", {
-      applicationId: this.pinpointApplication.ref,
-      enabled: true,
-    });
-
-    const smsSendFailureMetric = new cloudwatch.Metric({
-      namespace: "AWS/Pinpoint",
-      metricName: "CampaignSendMessagePermanentFailure",
-      period: Duration.minutes(1),
-      statistic: "sum",
-      dimensions: {
-        Channel: "SMS",
-        ApplicationId: smsChannel.applicationId,
-      },
-    });
-
-    const smsSendFailureAlert = new cloudwatch.Alarm(this, "campaignSendMessagePermanentFailureAlert", {
-      metric: smsSendFailureMetric,
-      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-      threshold: 1,
-      evaluationPeriods: 1,
-      datapointsToAlarm: 1,
-    });
-
-    smsSendFailureAlert.addAlarmAction(new cwActions.SnsAction(props.alarmTopic));
 
     this.userPoolGroup = new cognito.CfnUserPoolGroup(this, "user-pool-group", {
       description: props.tenantDescription,
@@ -80,13 +44,17 @@ export class Tenant extends cdk.Construct {
           service: "Pinpoint",
           action: "createSegment",
           parameters: {
-            ApplicationId: this.pinpointApplication.ref,
+            ApplicationId: props.pinpointApplication.ref,
             WriteSegmentRequest: {
-              Name: testPool,
+              Name: `${props.tenantName}_${testPool}`,
               Dimensions: {
                 Attributes: {
                   Group: {
                     Values: [testPool],
+                    AttributeType: "INCLUSIVE",
+                  },
+                  Tenant: {
+                    Values: [props.tenantName],
                     AttributeType: "INCLUSIVE",
                   },
                 },
@@ -104,36 +72,35 @@ export class Tenant extends cdk.Construct {
         policy: cr.AwsCustomResourcePolicy.fromStatements([
           new iam.PolicyStatement({
             actions: ["mobiletargeting:CreateSegment"],
-            resources: [this.pinpointApplication.attrArn],
+            resources: [props.pinpointApplication.attrArn],
           }),
         ]),
       });
 
       const segmentId = createSegment.getResponseField("SegmentResponse.Id");
-      poolItemsPutRequests.push(
-        this.generatePoolItemPutRequest(props.tenantName, testPool, this.pinpointApplication.ref, segmentId)
-      );
+      poolItemsPutRequests.push(this.generatePoolItemPutRequest(props.tenantName, testPool, segmentId));
     });
 
-    new cr.AwsCustomResource(this, "initial-pools", {
-      onCreate: {
-        service: "DynamoDB",
-        action: "batchWriteItem",
-        parameters: {
-          RequestItems: {
-            [props.poolTable.tableName]: poolItemsPutRequests,
+    if (poolItemsPutRequests.length > 0) {
+      new cr.AwsCustomResource(this, "initial-pools", {
+        onCreate: {
+          service: "DynamoDB",
+          action: "batchWriteItem",
+          parameters: {
+            RequestItems: {
+              [props.poolTable.tableName]: poolItemsPutRequests,
+            },
           },
+          physicalResourceId: cr.PhysicalResourceId.of(`${props.tenantName}_initial_pools`),
         },
-        physicalResourceId: cr.PhysicalResourceId.of(`${props.tenantName}_initial_pools`),
-      },
-      policy: cr.AwsCustomResourcePolicy.fromSdkCalls({ resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE }),
-    });
+        policy: cr.AwsCustomResourcePolicy.fromSdkCalls({ resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE }),
+      });
+    }
   }
 
   private generatePoolItemPutRequest = (
     tenantName: string,
     poolName: string,
-    pinpointApplicationId: string,
     segmentId: string
   ): PoolItemPutRequest => {
     return {
@@ -145,7 +112,6 @@ export class Tenant extends cdk.Construct {
           poolName: {
             S: poolName,
           },
-          pinpointApplicationId: { S: pinpointApplicationId },
           segmentId: { S: segmentId },
         },
       },
