@@ -24,6 +24,7 @@ const tenantManagement = new TenantManagementStack(app, `${deployStage}-kiko-ten
 new ApiStack(app, `${deployStage}-kiko-api`, {
   userPool: tenantManagement.userPool,
   poolTable: poolManagement.poolTable,
+  recipientTable: poolManagement.recipientTable,
   testResultProcessingStateMachine: poolManagement.testResultProcessingStateMachine,
 });
 

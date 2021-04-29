@@ -7,11 +7,19 @@ type Pool {
 
 type Query {
   listPools: [Pool]
+  listRecipients: [Recipient]
 }
 
 type Result {
   id: ID!
   status: ResultStatus!
+}
+
+type Recipient {
+  tenant: String!
+  address: String!
+  endpointId: String
+  pools: [String]
 }
 
 enum ResultStatus {
@@ -25,6 +33,12 @@ input ProcessTestResultInput {
   testResult: String!
 }
 
+input RecipientInput {
+  address: String!
+  pools: [String]
+}
+
 type Mutation {
   processTestResult(input: ProcessTestResultInput!): Result
+  addRecipient(input: RecipientInput!): Recipient
 }
