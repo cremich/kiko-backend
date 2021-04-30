@@ -13,6 +13,7 @@ new KikoStack(app, `${deployStage}-kiko-app`, {
   alertEmailAddress: process.env.ALERT_EMAIL_ADDRESS,
   slackChannelId: process.env.SLACK_CHANNEL_ID,
   slackWorkspaceId: process.env.SLACK_WORKSPACE_ID,
+  deployStage,
 });
 
 //

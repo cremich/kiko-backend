@@ -7,20 +7,24 @@ import * as path from "path";
 import * as tasks from "@aws-cdk/aws-stepfunctions-tasks";
 import * as sfn from "@aws-cdk/aws-stepfunctions";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
+import * as sns from "@aws-cdk/aws-sns";
+import * as cw from "@aws-cdk/aws-cloudwatch";
+import * as cwActions from "@aws-cdk/aws-cloudwatch-actions";
 
-export interface TestResultProcessingStateMachineProps {
-  poolTable: dynamodb.Table;
-  activityLog: dynamodb.Table;
+export interface TestResultWorkflowProps {
+  readonly poolTable: dynamodb.Table;
+  readonly activityLog: dynamodb.Table;
+  readonly alarmTopic: sns.Topic;
 }
 
-export class TestResultProcessingStateMachine extends cdk.Construct {
+export class TestResultWorkflow extends cdk.Construct {
   public stateMachine: sfn.StateMachine;
 
-  constructor(scope: cdk.Construct, id: string, props: TestResultProcessingStateMachineProps) {
+  constructor(scope: cdk.Construct, id: string, props: TestResultWorkflowProps) {
     super(scope, id);
 
     const forwardTestResultFunction = new lambdaNodejs.NodejsFunction(this, "forward-test-result-function", {
-      entry: path.join(__dirname, "lambdas", "forward-test-results.ts"),
+      entry: path.join(__dirname, "../lambdas", "forward-test-results.ts"),
       handler: "handler",
       bundling: { externalModules: [], sourceMap: true, minify: true },
       runtime: lambda.Runtime.NODEJS_14_X,
@@ -110,21 +114,41 @@ export class TestResultProcessingStateMachine extends cdk.Construct {
       tracingEnabled: true,
       logs: {
         destination: logGroup,
-        level: sfn.LogLevel.ALL,
+        level: sfn.LogLevel.ERROR,
       },
     });
 
-    this.stateMachine.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["dynamodb:PutItem"],
-        resources: [props.activityLog.tableArn],
+    this.stateMachine
+      .metricFailed()
+      .createAlarm(this, "execution-failed", {
+        threshold: 1,
+        evaluationPeriods: 1,
+        comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        alarmDescription: "Alarm for the number of executions that failed exceeded the threshold of 1. ",
       })
-    );
-    this.stateMachine.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["dynamodb:GetItem"],
-        resources: [props.poolTable.tableArn],
+      .addAlarmAction(new cwActions.SnsAction(props.alarmTopic));
+
+    this.stateMachine
+      .metricThrottled()
+      .createAlarm(this, "execution-throttled", {
+        threshold: 1,
+        evaluationPeriods: 1,
+        comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        alarmDescription: "Alarm for the number of executions that throttled exceeded the threshold of 1. ",
       })
-    );
+      .addAlarmAction(new cwActions.SnsAction(props.alarmTopic));
+
+    this.stateMachine
+      .metricAborted()
+      .createAlarm(this, "execution-aborted", {
+        threshold: 1,
+        evaluationPeriods: 1,
+        comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        alarmDescription: "Alarm for the number of executions that aborted exceeded the threshold of 1. ",
+      })
+      .addAlarmAction(new cwActions.SnsAction(props.alarmTopic));
+
+    props.activityLog.grantWriteData(this.stateMachine);
+    props.poolTable.grantReadData(this.stateMachine);
   }
 }
