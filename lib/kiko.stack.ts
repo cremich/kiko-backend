@@ -3,6 +3,8 @@ import * as dynamodb from "@aws-cdk/aws-dynamodb";
 import { AlarmNotification } from "./shared/constructs/alarm-notification";
 import { Databases } from "./pool-management/constructs/databases";
 import { TestResultWorkflow } from "./pool-management/constructs/test-result-workflow";
+import { GraphqlApi } from "./api/constructs/graphql-api";
+import { TenantManagement } from "./tenant-management/constructs/tenant-management";
 
 interface KikoStackProps extends cdk.StackProps {
   readonly slackWorkspaceId?: string;
@@ -15,7 +17,7 @@ export class KikoStack extends cdk.Stack {
   private testPoolTable: dynamodb.Table;
   private activityLogTable: dynamodb.Table;
 
-  constructor(scope: cdk.Construct, id: string, props?: KikoStackProps) {
+  constructor(scope: cdk.Construct, id: string, props: KikoStackProps) {
     super(scope, id, props);
 
     const alarmNotification = new AlarmNotification(this, "alarm-notification", {
@@ -36,10 +38,24 @@ export class KikoStack extends cdk.Stack {
       }
     });
 
-    new TestResultWorkflow(this, "test-result-workflow", {
+    const testResultWorkflow = new TestResultWorkflow(this, "test-result-workflow", {
       poolTable: this.testPoolTable,
       activityLog: this.activityLogTable,
       alarmTopic: alarmNotification.topic,
+    });
+
+    const tenantManagement = new TenantManagement(this, "tenant-management", {
+      poolTable: this.testPoolTable,
+      alarmTopic: alarmNotification.topic,
+      deployStage: props.deployStage,
+      tenants: this.node.tryGetContext("tenants"),
+    });
+
+    new GraphqlApi(this, "graphql-api", {
+      userPool: tenantManagement.userPool,
+      poolTable: this.testPoolTable,
+      region: this.region,
+      testResultWorkflow: testResultWorkflow.stateMachine,
     });
   }
 }
