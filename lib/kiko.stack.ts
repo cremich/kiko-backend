@@ -1,5 +1,6 @@
 import * as cdk from "@aws-cdk/core";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
+import { CloudFrontToS3 } from "@aws-solutions-constructs/aws-cloudfront-s3";
 import { AlarmNotification } from "./shared/constructs/alarm-notification";
 import { Databases } from "./pool-management/constructs/databases";
 import { TestResultWorkflow } from "./pool-management/constructs/test-result-workflow";
@@ -56,6 +57,14 @@ export class KikoStack extends cdk.Stack {
       poolTable: this.testPoolTable,
       region: this.region,
       testResultWorkflow: testResultWorkflow.stateMachine,
+    });
+
+    new CloudFrontToS3(this, "hosting", {
+      insertHttpSecurityHeaders: false,
+      bucketProps: {
+        websiteErrorDocument: "index.html",
+        websiteIndexDocument: "index.html",
+      },
     });
   }
 }
