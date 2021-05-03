@@ -1,6 +1,7 @@
 import "@aws-cdk/assert/jest";
 import * as cdk from "@aws-cdk/core";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
+import * as pinpoint from "@aws-cdk/aws-pinpoint";
 import * as sfn from "@aws-cdk/aws-stepfunctions";
 import * as sns from "@aws-cdk/aws-sns";
 import {
@@ -18,10 +19,7 @@ beforeEach(() => {
       partitionKey: { name: "tenant", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "poolName", type: dynamodb.AttributeType.STRING },
     }),
-    activityLog: new dynamodb.Table(stack, "activity-log-table", {
-      partitionKey: { name: "tenant", type: dynamodb.AttributeType.STRING },
-      sortKey: { name: "dateTime", type: dynamodb.AttributeType.STRING },
-    }),
+    pinpointApplication: new pinpoint.CfnApp(stack, "pinpoint-app", { name: "test-pinpoint-app" }),
     alarmTopic: new sns.Topic(stack, "alarm-topic", {}),
   };
 });

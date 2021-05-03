@@ -16,7 +16,6 @@ interface KikoStackProps extends cdk.StackProps {
 
 export class KikoStack extends cdk.Stack {
   private testPoolTable: dynamodb.Table;
-  private activityLogTable: dynamodb.Table;
 
   constructor(scope: cdk.Construct, id: string, props: KikoStackProps) {
     super(scope, id, props);
@@ -34,15 +33,7 @@ export class KikoStack extends cdk.Stack {
     databases.tables.forEach((dynamoDbTable) => {
       if (dynamoDbTable.id === "test-pool") {
         this.testPoolTable = dynamoDbTable.table;
-      } else if (dynamoDbTable.id === "activity-log") {
-        this.activityLogTable = dynamoDbTable.table;
       }
-    });
-
-    const testResultWorkflow = new TestResultWorkflow(this, "test-result-workflow", {
-      poolTable: this.testPoolTable,
-      activityLog: this.activityLogTable,
-      alarmTopic: alarmNotification.topic,
     });
 
     const tenantManagement = new TenantManagement(this, "tenant-management", {
@@ -50,6 +41,12 @@ export class KikoStack extends cdk.Stack {
       alarmTopic: alarmNotification.topic,
       deployStage: props.deployStage,
       tenants: this.node.tryGetContext("tenants"),
+    });
+
+    const testResultWorkflow = new TestResultWorkflow(this, "test-result-workflow", {
+      poolTable: this.testPoolTable,
+      alarmTopic: alarmNotification.topic,
+      pinpointApplication: tenantManagement.pinpointApplication,
     });
 
     new GraphqlApi(this, "graphql-api", {

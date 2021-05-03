@@ -22,16 +22,10 @@ const dynamoDbConfiguration: DynamoDbConfiguration[] = [
     partitionKey: { name: "tenant", type: dynamodb.AttributeType.STRING },
     sortKey: { name: "poolName", type: dynamodb.AttributeType.STRING },
   },
-  {
-    id: "activity-log",
-    partitionKey: { name: "tenant", type: dynamodb.AttributeType.STRING },
-    sortKey: { name: "dateTime", type: dynamodb.AttributeType.STRING },
-  },
 ];
 
 export class Databases extends cdk.Construct {
   public tables: DynamoDbTableListEntry[] = [];
-  // public testResultProcessingStateMachine: sfn.StateMachine;
 
   constructor(scope: cdk.Construct, id: string, props: DatabaseProps) {
     super(scope, id);
@@ -50,12 +44,6 @@ export class Databases extends cdk.Construct {
         table,
       });
     });
-    // const testResultProcessingStateMachine = new TestResultWorkflow(this, "test-result-workflow", {
-    //   activityLog: this.activityLogTable,
-    //   poolTable: this.poolTable,
-    // });
-    //
-    // this.testResultProcessingStateMachine = testResultProcessingStateMachine.stateMachine;
 
     //TODO: move to stack level
     // new cdk.CfnOutput(this, "test-result-processing-state-machine-arn", {
