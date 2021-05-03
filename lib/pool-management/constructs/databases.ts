@@ -44,10 +44,5 @@ export class Databases extends cdk.Construct {
         table,
       });
     });
-
-    //TODO: move to stack level
-    // new cdk.CfnOutput(this, "test-result-processing-state-machine-arn", {
-    //   value: this.testResultProcessingStateMachine.stateMachineArn,
-    // });
   }
 }

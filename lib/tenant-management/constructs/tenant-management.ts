@@ -110,19 +110,6 @@ export class TenantManagement extends cdk.Construct {
       });
 
       this.tenants.push(tenantConstruct);
-
-      //TODO: move to main stack
-      //   new cdk.CfnOutput(this, `${tenant.tenantName}-pinpoint-application-id`, {
-      //     value: tenantConstruct.pinpointApplication.ref,
-      //   });
-      //   new cdk.CfnOutput(this, `${tenant.tenantName}-user-pool-group`, {
-      //     value: tenantConstruct.userPoolGroup.groupName || "",
-      //   });
     });
-
-    // new cdk.CfnOutput(this, "project-region", { value: this.region });
-    // new cdk.CfnOutput(this, "cognito-region", { value: this.region });
-    // new cdk.CfnOutput(this, "cognito-user-pool-id", { value: this.userPool.userPoolId });
-    // new cdk.CfnOutput(this, "cognito-web-client-id", { value: webClient.userPoolClientId });
   }
 }

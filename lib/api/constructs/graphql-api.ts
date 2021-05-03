@@ -94,10 +94,5 @@ export class GraphqlApi extends cdk.Construct {
       ),
       responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultList(),
     });
-
-    // TODO: add to stack
-    // new cdk.CfnOutput(this, "aws-appsync-graphqlEndpoint", {
-    //   value: api.graphqlUrl,
-    // });
   }
 }

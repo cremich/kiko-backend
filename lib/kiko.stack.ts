@@ -49,7 +49,7 @@ export class KikoStack extends cdk.Stack {
       pinpointApplication: tenantManagement.pinpointApplication,
     });
 
-    new GraphqlApi(this, "graphql-api", {
+    const graphqlpi = new GraphqlApi(this, "graphql-api", {
       userPool: tenantManagement.userPool,
       poolTable: this.testPoolTable,
       region: this.region,
@@ -63,5 +63,18 @@ export class KikoStack extends cdk.Stack {
         websiteIndexDocument: "index.html",
       },
     });
+
+    new cdk.CfnOutput(this, "test-result-workflow-arn", {
+      value: testResultWorkflow.stateMachine.stateMachineArn,
+    });
+
+    new cdk.CfnOutput(this, "aws-appsync-graphqlEndpoint", {
+      value: graphqlpi.api.graphqlUrl,
+    });
+
+    new cdk.CfnOutput(this, "project-region", { value: this.region });
+    new cdk.CfnOutput(this, "cognito-region", { value: this.region });
+    new cdk.CfnOutput(this, "cognito-user-pool-id", { value: tenantManagement.userPool.userPoolId });
+    new cdk.CfnOutput(this, "cognito-web-client-id", { value: tenantManagement.webClient.userPoolClientId });
   }
 }
