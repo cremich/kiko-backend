@@ -71,3 +71,31 @@ test("Activity log table is created name {deployStage}-kiko-activity-log", () =>
     TableName: "test-kiko-activity-log",
   });
 });
+
+test("Test result recipient table is created with tenant partition key and address sort key", () => {
+  const app = new cdk.App();
+  const stack = new PoolManagementStack(app, "pool-management", { deployStage: "test" });
+  expect(stack).toHaveResource("AWS::DynamoDB::Table", {
+    TableName: "test-kiko-test-result-recipients",
+    KeySchema: [
+      {
+        AttributeName: "tenant",
+        KeyType: "HASH",
+      },
+      {
+        AttributeName: "address",
+        KeyType: "RANGE",
+      },
+    ],
+    AttributeDefinitions: [
+      {
+        AttributeName: "tenant",
+        AttributeType: "S",
+      },
+      {
+        AttributeName: "address",
+        AttributeType: "S",
+      },
+    ],
+  });
+});

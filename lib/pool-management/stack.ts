@@ -11,6 +11,7 @@ interface PoolManagementStackProps extends cdk.StackProps {
 
 export class PoolManagementStack extends cdk.Stack {
   public poolTable: dynamodb.Table;
+  public recipientTable: dynamodb.Table;
   public testResultProcessingStateMachine: sfn.StateMachine;
 
   constructor(scope: cdk.Construct, id: string, props: PoolManagementStackProps) {
@@ -29,6 +30,14 @@ export class PoolManagementStack extends cdk.Stack {
       tableName: `${props.deployStage}-kiko-activity-log`,
       partitionKey: { name: "tenant", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "dateTime", type: dynamodb.AttributeType.STRING },
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      deployStage: props.deployStage,
+    });
+
+    this.recipientTable = new DynamodbTable(this, "recipients", {
+      tableName: `${props.deployStage}-kiko-test-result-recipients`,
+      partitionKey: { name: "tenant", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "address", type: dynamodb.AttributeType.STRING },
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
       deployStage: props.deployStage,
     });
