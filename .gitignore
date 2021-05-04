@@ -10,3 +10,5 @@ cdk.out
 
 .idea
 .eslintcache
+
+output.json
