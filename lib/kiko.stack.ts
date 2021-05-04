@@ -64,6 +64,10 @@ export class KikoStack extends cdk.Stack {
       },
     });
 
+    new cdk.CfnOutput(this, "pinpoint-application-id", {
+      value: tenantManagement.pinpointApplication.ref,
+    });
+
     new cdk.CfnOutput(this, "test-result-workflow-arn", {
       value: testResultWorkflow.stateMachine.stateMachineArn,
     });
