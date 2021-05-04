@@ -3,7 +3,6 @@ import * as cdk from "@aws-cdk/core";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
 import { Databases } from "../../../lib/pool-management/constructs/databases";
 import { ResourcePart } from "@aws-cdk/assert";
-import { TenantManagement } from "../../../lib/tenant-management/constructs/tenant-management";
 
 let stack: cdk.Stack;
 

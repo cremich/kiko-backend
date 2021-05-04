@@ -2,7 +2,6 @@ import * as cdk from "@aws-cdk/core";
 import "@aws-cdk/assert/jest";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
 import * as sns from "@aws-cdk/aws-sns";
-import * as pinpoint from "@aws-cdk/aws-pinpoint";
 import { TenantManagement } from "../../../lib/tenant-management/constructs/tenant-management";
 import * as cognito from "@aws-cdk/aws-cognito";
 

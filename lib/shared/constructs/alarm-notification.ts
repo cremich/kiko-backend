@@ -1,4 +1,3 @@
-import { v4 as uuid } from "uuid";
 import * as cdk from "@aws-cdk/core";
 import * as chatbot from "@aws-cdk/aws-chatbot";
 import * as logs from "@aws-cdk/aws-logs";
