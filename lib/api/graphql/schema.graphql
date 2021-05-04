@@ -2,7 +2,6 @@ type Pool {
   tenant: String!
   poolName: String!
   segmentId: String
-  pinpointApplicationId: String
 }
 
 type Query {

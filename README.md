@@ -1,6 +1,6 @@
 # KIKO Backend
 
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg?style=for-the-badge)](code_of_conduct.md)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg?style=for-the-badge)](./CODE_OF_CONDUCT.md)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=for-the-badge)](https://github.com/prettier/prettier)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/cremich?style=for-the-badge)](https://github.com/sponsors/cremich)
 [![Paypal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/pools/c/8yGs7i3cOe)
@@ -29,7 +29,7 @@ The tenant management module is responsible to provide an Amazon Cognito user po
 
 ### Pool Management
 
-Provides storage for testing pools and testing activities and encapsulates the business logic for processing test results in an AWS Step Function workflow.
+Provides storage for test pool metadata and encapsulates the business logic for processing test results in an AWS Step Function workflow.
 
 ### API Layer
 
@@ -92,17 +92,16 @@ As the lambda functions are constructed using the [@aws-cdk/aws-lambda-nodejs mo
 
 ### Deploy the application
 
-If you'd like to receive email notifications for cloudwatch alarms (which is recommendable) provide your admin address
-at deploy time. Multiple comma-separated addresses are also supported.
+If you'd like to receive email notifications for cloudwatch alarms (which is recommendable) provide your admin address at deploy time.
 
 ```shell
-export ALARM_SUBSCRIPTION_EMAIL_ADDRESSES=admin@example.com
+export ALERT_EMAIL_ADDRESS=admin@example.com
 ```
 
 To deploy the stack using AWS CloudFormation, simply run
 
 ```shell
-npx cdk deploy --all --outputs-file output.json
+npx cdk deploy --outputs-file output.json
 ```
 
 This will start the deployment process and create or update your environemnt. The CDK asks for approval on any IAM or security-group-related changes by default. You will be asked to confirm the changes before they are actually executed in your AWS account.
@@ -110,30 +109,25 @@ CDK will write all AWS Cloudformation outputs into a file if you set the `--outp
 
 ```json
 {
-  "dev-kiko-pool-management": {
-    "testresultprocessingstatemachinearn": "arn:aws:states:eu-central-1:1234567890:stateMachine:testresultprocessingprocesstestresult"
-  },
-  "dev-kiko-tenant-management": {
+  "dev-kiko-app": {
+    "pinpointapplicationid": "thisiscompletelyrandom",
     "projectregion": "eu-central-1",
+    "testresultworkflowarn": "arn:aws:states:eu-central-1:1234567890:stateMachine:testresultworkflowprocesstestresult",
     "cognitouserpoolid": "eu-central-1_thisiscompletelyrandom",
-    "demopinpointapplicationid": "thisiscompletelyrandom",
-    "demouserpoolgroup": "demo",
+    "awsappsyncgraphqlEndpoint": "https://thisiscompletelyrandom.appsync-api.eu-central-1.amazonaws.com/graphql",
     "cognitowebclientid": "thisiscompletelyrandom",
     "cognitoregion": "eu-central-1"
-  },
-  "dev-kiko-api": {
-    "awsappsyncgraphqlEndpoint": "https://thisiscompletelyrandom.appsync-api.eu-central-1.amazonaws.com/graphql"
   }
 }
 ```
 
 ### Create a user for the demo tenant
 
-Run the following command in your terminal to create a new user with an E-Mail of your choice. Please update the parameter `user-pool-id` and replace it with the corresponding deployment output. You find the `user-pool-id` in the deployment output with the key `dev-kiko-tenant-management.cognitouserpoolid`.
+Run the following command in your terminal to create a new user with an E-Mail of your choice. Please update the parameter `user-pool-id` and replace it with the corresponding deployment output. You find the `user-pool-id` in the deployment output with the key `dev-kiko-app.cognitouserpoolid`.
 
 ```shell
 aws cognito-idp admin-create-user \
-    --user-pool-id dev-kiko-tenant-management.cognitouserpoolid \
+    --user-pool-id dev-kiko-app.cognitouserpoolid \
     --username me@example.com \
     --user-attributes Name=email,Value=me@example.com \
     --desired-delivery-mediums EMAIL
@@ -144,18 +138,18 @@ Verify the creation step by opening your inbox and check if you received the inv
 Next assign your newly created user to the demo tenant cognito group.
 
 ```shell
-aws cognito-idp admin-add-user-to-group --user-pool-id dev-kiko-tenant-management.cognitouserpoolid --username me@example.com --group-name demo
+aws cognito-idp admin-add-user-to-group --user-pool-id dev-kiko-app.cognitouserpoolid --username me@example.com --group-name demo
 ```
 
 ### Create an endpoint in pinpoint to receive test results
 
-Insert the application-id of the demo pinpoint application from the deployment output in the following command to create an endpoint that is part of all three initialized test groups. Please also ensure to update the `Address` attribute with your mobile phone number. An unique endpoint id is also required. Choose a random string or use the mobile phone number here as well.
+Insert the application-id of the demo pinpoint application from the deployment output in the following command to create an endpoint that is part of all three initialized test groups. Please also ensure to update the `Address` attribute with your mobile phone number. A unique endpoint id is also required. Choose a random string or use the mobile phone number here as well.
 
 ```shell
 aws pinpoint update-endpoint \
- --application-id dev-kiko-tenant-management.demopinpointapplicationid \
+ --application-id dev-kiko-app.demopinpointapplicationid \
  --endpoint-id test-endpoint \
- --endpoint-request '{"ChannelType": "SMS", "Address": "+4912345678","Attributes": {"Group": ["Alpha","Beta","Gamma"]} }'
+ --endpoint-request '{"ChannelType": "SMS", "Address": "+4912345678","Attributes": {"Group": ["Alpha","Beta","Gamma"],"Tenant": ["demo"]} }'
 ```
 
 Note that your account might need a service limit increase before you'll be able to have SMS sent out.
@@ -167,7 +161,7 @@ One option to trigger the test result processing is to start an AWS Step Functio
 
 ```shell
 aws stepfunctions start-execution \
-  --state-machine-arn dev-kiko-pool-management.testresultprocessingstatemachinearn \
+  --state-machine-arn dev-kiko-app.testresultworkflowarn \
   --input "{\"tenant\":\"demo\",\"poolName\":\"Alpha\",\"testResult\":\"P\"}"
 ```
 
@@ -178,7 +172,7 @@ Only positive test results are forwarded to the pool recipients. In case of a ne
 
 ```shell
 aws stepfunctions start-execution \
-  --state-machine-arn dev-kiko-pool-management.testresultprocessingstatemachinearn \
+  --state-machine-arn dev-kiko-app.testresultworkflowarn \
   --input "{\"tenant\":\"demo\",\"poolName\":\"Alpha\",\"testResult\":\"N\"}"
 ```
 

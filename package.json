@@ -22,6 +22,7 @@
     "@typescript-eslint/eslint-plugin": "^4.22.0",
     "@typescript-eslint/parser": "^4.22.0",
     "aws-sdk": "2.804.0",
+    "aws-sdk-mock": "^5.1.0",
     "aws-xray-sdk": "^3.3.1",
     "eslint": "^7.25.0",
     "eslint-config-prettier": "^8.3.0",
@@ -35,6 +36,7 @@
   "dependencies": {
     "@aws-cdk/aws-amplify": "^1.100.0",
     "@aws-cdk/aws-appsync": "^1.100.0",
+    "@aws-cdk/aws-chatbot": "^1.100.0",
     "@aws-cdk/aws-cloudwatch-actions": "^1.100.0",
     "@aws-cdk/aws-codecommit": "^1.100.0",
     "@aws-cdk/aws-cognito": "^1.100.0",
@@ -46,6 +48,7 @@
     "@aws-cdk/aws-logs": "^1.100.0",
     "@aws-cdk/aws-pinpoint": "^1.100.0",
     "@aws-cdk/aws-sns": "^1.100.0",
+    "@aws-solutions-constructs/aws-cloudfront-s3": "^1.100.0",
     "@aws-cdk/aws-stepfunctions": "^1.100.0",
     "@aws-cdk/aws-stepfunctions-tasks": "^1.100.0",
     "@aws-cdk/core": "^1.100.0",
