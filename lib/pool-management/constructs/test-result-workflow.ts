@@ -31,6 +31,7 @@ export class TestResultWorkflow extends cdk.Construct {
       runtime: lambda.Runtime.NODEJS_14_X,
       tracing: lambda.Tracing.ACTIVE,
       logRetention: logs.RetentionDays.ONE_DAY,
+      timeout: cdk.Duration.seconds(12),
       initialPolicy: [
         new iam.PolicyStatement({
           actions: ["mobiletargeting:CreateCampaign"],
@@ -50,6 +51,7 @@ export class TestResultWorkflow extends cdk.Construct {
       runtime: lambda.Runtime.NODEJS_14_X,
       tracing: lambda.Tracing.ACTIVE,
       logRetention: logs.RetentionDays.ONE_DAY,
+      timeout: cdk.Duration.seconds(12),
       initialPolicy: [
         new iam.PolicyStatement({
           actions: ["mobiletargeting:GetCampaignActivities"],
