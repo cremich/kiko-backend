@@ -61,10 +61,7 @@ it("campaign is created for valid test pool", async () => {
   });
   const forwardTestResult = await handler(event);
   expect(forwardTestResult.campaignId).toBe("mocked-campaign-id");
-  expect(forwardTestResult.tenant).toBe(event.tenant);
   expect(forwardTestResult.segmentId).toBe("mocked-segment-id");
-  expect(forwardTestResult.poolName).toBe(event.poolName);
-  expect(forwardTestResult.testResult).toBe(event.testResult);
   AWSMock.restore("DynamoDB.DocumentClient");
 });
 

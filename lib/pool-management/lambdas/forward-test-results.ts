@@ -40,12 +40,9 @@ export const handler = async (event: ForwardTestResultEvent) => {
     .promise();
 
   return {
-    tenant: event.tenant,
     campaignId: createCampaignResponse.CampaignResponse.Id,
-    campaignName,
-    segmentId: testPool.segmentId,
-    poolName: event.poolName,
-    testResult: event.testResult,
+    segmentId: createCampaignResponse.CampaignResponse.SegmentId,
+    campaignStatus: createCampaignResponse.CampaignResponse.State?.CampaignStatus,
   };
 };
 

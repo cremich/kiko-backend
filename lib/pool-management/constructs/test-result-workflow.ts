@@ -34,7 +34,7 @@ export class TestResultWorkflow extends cdk.Construct {
       initialPolicy: [
         new iam.PolicyStatement({
           actions: ["mobiletargeting:CreateCampaign"],
-          resources: [`${props.pinpointApplication.attrArn}/segments/*`],
+          resources: [`${props.pinpointApplication.attrArn}`, `${props.pinpointApplication.attrArn}/segments/*`],
         }),
       ],
     });
@@ -43,23 +43,67 @@ export class TestResultWorkflow extends cdk.Construct {
     forwardTestResultFunction.addEnvironment("PINPOINT_APPLICATION_ID", props.pinpointApplication.ref);
     props.poolTable.grantReadData(forwardTestResultFunction);
 
+    const campaignStatusFunction = new lambdaNodejs.NodejsFunction(this, "campaign-status-function", {
+      entry: path.join(__dirname, "../lambdas", "campaign-status.ts"),
+      handler: "handler",
+      bundling: { externalModules: [], sourceMap: true, minify: true },
+      runtime: lambda.Runtime.NODEJS_14_X,
+      tracing: lambda.Tracing.ACTIVE,
+      logRetention: logs.RetentionDays.ONE_DAY,
+      initialPolicy: [
+        new iam.PolicyStatement({
+          actions: ["mobiletargeting:GetCampaignActivities"],
+          resources: [`${props.pinpointApplication.attrArn}`, `${props.pinpointApplication.attrArn}/campaigns/*`],
+        }),
+      ],
+    });
+    campaignStatusFunction.addEnvironment("PINPOINT_APPLICATION_ID", props.pinpointApplication.ref);
+
     const forwardTestResultTask = new tasks.LambdaInvoke(this, "forward-test-result", {
       lambdaFunction: forwardTestResultFunction,
       payload: sfn.TaskInput.fromObject({
-        "tenant.$": "$.pool.Item.tenant.S",
-        "pinpointApplicationId.$": "$.pool.Item.pinpointApplicationId.S",
-        "segmentId.$": "$.pool.Item.segmentId.S",
-        "poolName.$": "$.pool.Item.poolName.S",
+        "tenant.$": "$.tenant",
+        "poolName.$": "$.poolName",
         "testResult.$": "$.testResult",
       }),
       outputPath: "$.Payload",
     });
 
+    const checkCampaignStatus = new tasks.LambdaInvoke(this, "check-campaign-status", {
+      lambdaFunction: campaignStatusFunction,
+      payload: sfn.TaskInput.fromObject({
+        "campaignId.$": "$.campaignId",
+      }),
+      outputPath: "$.Payload",
+    });
+
+    const waitForCampaignState = new sfn.Wait(this, "wait-for-campaign", {
+      time: sfn.WaitTime.duration(cdk.Duration.seconds(10)),
+    });
+
     const logGroup = new logs.LogGroup(this, "test-result-processing-log-group", {
       retention: logs.RetentionDays.ONE_DAY,
     });
+
+    const stateMachineDefinition = forwardTestResultTask.next(
+      waitForCampaignState.next(
+        checkCampaignStatus.next(
+          new sfn.Choice(this, "is-campaign-finished", {})
+            .when(
+              sfn.Condition.stringEquals("$.campaignStatus", "INVALID"),
+              new sfn.Fail(this, "campaign-creation-failed")
+            )
+            .when(
+              sfn.Condition.stringEquals("$.campaignStatus", "COMPLETED"),
+              new sfn.Pass(this, "campaign-creation-succeeded")
+            )
+            .otherwise(waitForCampaignState)
+        )
+      )
+    );
+
     this.stateMachine = new sfn.StateMachine(this, "process-test-result", {
-      definition: forwardTestResultTask,
+      definition: stateMachineDefinition,
       timeout: cdk.Duration.minutes(5),
       tracingEnabled: true,
       logs: {
