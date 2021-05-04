@@ -1,35 +1,29 @@
-import { captureAWSClient } from "aws-xray-sdk";
+import { captureAWS } from "aws-xray-sdk";
 import * as AWS from "aws-sdk";
 
 interface ForwardTestResultEvent {
   readonly tenant: string;
-  readonly segmentId: string;
   readonly poolName: string;
   readonly testResult: string;
 }
 
-const pinpointClient = captureAWSClient(new AWS.Pinpoint());
-const dynamoDbService = new AWS.DynamoDB();
-const dynamoDbClient = new AWS.DynamoDB.DocumentClient({
-  service: new AWS.DynamoDB(),
-});
+captureAWS(AWS);
 
-captureAWSClient(dynamoDbService);
-const env = validateEnvironmentVars();
-
-exports.handler = async function (event: ForwardTestResultEvent) {
-  await throwErrorIfPoolNotExists(event.poolName, event.tenant);
+export const handler = async (event: ForwardTestResultEvent) => {
+  const env = validateEnvironmentVars();
+  const testPool = await readTestPoolFromDynamoDb(env.poolTableName, event.poolName, event.tenant);
 
   const testResult = event.testResult === "N" ? "NEGATIV" : "POSITIV";
   const messageBody = `Gruppe ${event.poolName} - SARS-CoV-2 Pool-Testergebnis: ${testResult}`;
   const date = new Date();
   const campaignName = `POOL_TEST_FWD_${event.poolName}_${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
+  const pinpointClient = new AWS.Pinpoint();
   const createCampaignResponse = await pinpointClient
     .createCampaign({
       ApplicationId: env.pinpointApplicationId,
       WriteCampaignRequest: {
-        SegmentId: event.segmentId,
+        SegmentId: testPool.segmentId,
         Name: campaignName,
         MessageConfiguration: {
           SMSMessage: {
@@ -49,7 +43,7 @@ exports.handler = async function (event: ForwardTestResultEvent) {
     tenant: event.tenant,
     campaignId: createCampaignResponse.CampaignResponse.Id,
     campaignName,
-    segmentId: event.segmentId,
+    segmentId: testPool.segmentId,
     poolName: event.poolName,
     testResult: event.testResult,
   };
@@ -57,10 +51,10 @@ exports.handler = async function (event: ForwardTestResultEvent) {
 
 function validateEnvironmentVars() {
   if (!process.env.POOL_TABLE_NAME) {
-    throw new Error("Environment var 'POOL_TABLE_NAME' not found.");
+    throw new Error("Environment var POOL_TABLE_NAME not found.");
   }
   if (!process.env.PINPOINT_APPLICATION_ID) {
-    throw new Error("Environment var 'PINPOINT_APPLICATION_ID' not found.");
+    throw new Error("Environment var PINPOINT_APPLICATION_ID not found.");
   }
 
   return {
@@ -69,9 +63,12 @@ function validateEnvironmentVars() {
   };
 }
 
-async function throwErrorIfPoolNotExists(poolName: string, tenant: string) {
-  const getItemResult = await dynamoDbClient.get({ TableName: env.poolTableName, Key: { tenant, poolName } }).promise();
+async function readTestPoolFromDynamoDb(tableName: string, poolName: string, tenant: string) {
+  const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+  const getItemResult = await dynamoDbClient.get({ TableName: tableName, Key: { tenant, poolName } }).promise();
   if (!getItemResult.Item) {
     throw new Error(`pool ${poolName} not found for tenant ${tenant}`);
   }
+
+  return getItemResult.Item;
 }
