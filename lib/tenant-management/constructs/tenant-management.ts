@@ -1,5 +1,6 @@
 import * as cdk from "@aws-cdk/core";
 import * as cognito from "@aws-cdk/aws-cognito";
+import * as cloudfront from "@aws-cdk/aws-cloudfront";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
 
 import { Tenant } from "./tenant";
@@ -7,6 +8,11 @@ import * as sns from "@aws-cdk/aws-sns";
 import * as pinpoint from "@aws-cdk/aws-pinpoint";
 import * as cloudwatch from "@aws-cdk/aws-cloudwatch";
 import * as cwActions from "@aws-cdk/aws-cloudwatch-actions";
+import * as lambdaNodejs from "@aws-cdk/aws-lambda-nodejs";
+import * as path from "path";
+import * as lambda from "@aws-cdk/aws-lambda";
+import * as logs from "@aws-cdk/aws-logs";
+import * as iam from "@aws-cdk/aws-iam";
 
 interface TenantContext {
   readonly tenantName: string;
@@ -14,11 +20,12 @@ interface TenantContext {
   readonly testPools: string[];
 }
 
-interface TenantManagementProps {
+export interface TenantManagementProps {
   readonly poolTable: dynamodb.Table;
   readonly deployStage: string;
   readonly alarmTopic: sns.Topic;
   readonly tenants: TenantContext[];
+  readonly cloudfrontDistribution: cloudfront.Distribution;
 }
 
 export class TenantManagement extends cdk.Construct {
@@ -35,8 +42,11 @@ export class TenantManagement extends cdk.Construct {
     <br/>
     {####}<br/>
     <br/>
-    Bitte melde dich zunächst mit dieser E-Mail Adresse und deinem temporären Password an. Du wirst anschließend
-    aufgefordert, ein neues Passwort zu setzen. Dein temporäres Passwort ist 7 Tage gültig.<br/> 
+    Bitte melde dich zunächst mit dieser E-Mail Adresse und deinem temporären Password unter<br/>
+    <br/>
+    https://${props.cloudfrontDistribution.distributionDomainName}<br/>
+    <br/> 
+    an. Du wirst anschließend aufgefordert, ein neues Passwort zu setzen. Dein temporäres Passwort ist 7 Tage gültig.<br/> 
     <br/>
     Dein KiKo-App Team! 
     `;
@@ -111,5 +121,31 @@ export class TenantManagement extends cdk.Construct {
 
       this.tenants.push(tenantConstruct);
     });
+
+    const onboardTenantFunction = new lambdaNodejs.NodejsFunction(this, "onboard-tenant-function", {
+      entry: path.join(__dirname, "../lambdas", "onboard-tenant.ts"),
+      handler: "handler",
+      bundling: { externalModules: [], sourceMap: true, minify: true },
+      runtime: lambda.Runtime.NODEJS_14_X,
+      tracing: lambda.Tracing.ACTIVE,
+      logRetention: logs.RetentionDays.ONE_DAY,
+      timeout: cdk.Duration.seconds(12),
+      initialPolicy: [
+        new iam.PolicyStatement({
+          actions: ["mobiletargeting:CreateSegment"],
+          resources: [`${this.pinpointApplication.attrArn}`],
+        }),
+        new iam.PolicyStatement({
+          actions: ["cognito-idp:AdminCreateUser", "cognito-idp:AdminAddUserToGroup", "cognito-idp:CreateGroup"],
+          resources: [`${this.userPool.userPoolArn}`],
+        }),
+      ],
+    });
+
+    props.poolTable.grantWriteData(onboardTenantFunction);
+
+    onboardTenantFunction.addEnvironment("POOL_TABLE_NAME", props.poolTable.tableName);
+    onboardTenantFunction.addEnvironment("PINPOINT_APPLICATION_ID", this.pinpointApplication.ref);
+    onboardTenantFunction.addEnvironment("COGNITO_USER_POOL_ID", this.userPool.userPoolId);
   }
 }

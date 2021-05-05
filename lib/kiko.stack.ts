@@ -1,11 +1,11 @@
 import * as cdk from "@aws-cdk/core";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
-import { CloudFrontToS3 } from "@aws-solutions-constructs/aws-cloudfront-s3";
 import { AlarmNotification } from "./shared/constructs/alarm-notification";
 import { Databases } from "./pool-management/constructs/databases";
 import { TestResultWorkflow } from "./pool-management/constructs/test-result-workflow";
 import { GraphqlApi } from "./api/constructs/graphql-api";
 import { TenantManagement } from "./tenant-management/constructs/tenant-management";
+import { Hosting } from "./frontend/constructs/hosting";
 
 interface KikoStackProps extends cdk.StackProps {
   readonly slackWorkspaceId?: string;
@@ -36,11 +36,14 @@ export class KikoStack extends cdk.Stack {
       }
     });
 
+    const hosting = new Hosting(this, "frontend-hosting");
+
     const tenantManagement = new TenantManagement(this, "tenant-management", {
       poolTable: this.testPoolTable,
       alarmTopic: alarmNotification.topic,
       deployStage: props.deployStage,
       tenants: this.node.tryGetContext("tenants"),
+      cloudfrontDistribution: hosting.distribution,
     });
 
     const testResultWorkflow = new TestResultWorkflow(this, "test-result-workflow", {
@@ -54,14 +57,6 @@ export class KikoStack extends cdk.Stack {
       poolTable: this.testPoolTable,
       region: this.region,
       testResultWorkflow: testResultWorkflow.stateMachine,
-    });
-
-    new CloudFrontToS3(this, "hosting", {
-      insertHttpSecurityHeaders: false,
-      bucketProps: {
-        websiteErrorDocument: "index.html",
-        websiteIndexDocument: "index.html",
-      },
     });
 
     new cdk.CfnOutput(this, "pinpoint-application-id", {
@@ -80,5 +75,9 @@ export class KikoStack extends cdk.Stack {
     new cdk.CfnOutput(this, "cognito-region", { value: this.region });
     new cdk.CfnOutput(this, "cognito-user-pool-id", { value: tenantManagement.userPool.userPoolId });
     new cdk.CfnOutput(this, "cognito-web-client-id", { value: tenantManagement.webClient.userPoolClientId });
+
+    new cdk.CfnOutput(this, "frontend-url", {
+      value: `https://${hosting.distribution.distributionDomainName}`,
+    });
   }
 }
