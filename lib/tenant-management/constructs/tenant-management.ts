@@ -42,7 +42,7 @@ export class TenantManagement extends cdk.Construct {
     <br/>
     {####}<br/>
     <br/>
-    Bitte melde dich zunächst mit dieser E-Mail Adresse und deinem temporären Password unter<br/>
+    Bitte melde dich zunächst mit dieser E-Mail Adresse und deinem temporären Passwort unter<br/>
     <br/>
     https://${props.cloudfrontDistribution.distributionDomainName}<br/>
     <br/> 
